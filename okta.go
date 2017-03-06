@@ -151,23 +151,36 @@ func extractTokenFactor(ores *OktaLoginResponse) (*OktaMfaFactor, error) {
 		return nil, errors.New("MFA factors not present in response")
 	}
 
-	var tokenFactor OktaMfaFactor
+	var tokenFactor *OktaMfaFactor
 	for _, factor := range factors {
 		// need to assert that this is a map
 		// since I don't know the structure enough
 		// to make a struct for it
-		if factor.FactorType == "token:software:totp" {
-			debugOkta("software totp token found!")
-			tokenFactor = factor
+		if factor.FactorType == "push" {
+			debugOkta("push found!")
+			tokenFactor = &factor
 			break
 		}
 	}
+
+    if tokenFactor == nil {
+        for _, factor := range factors {
+            // need to assert that this is a map
+            // since I don't know the structure enough
+            // to make a struct for it
+            if factor.FactorType == "token:software:totp" {
+                debugOkta("software totp token found!")
+                tokenFactor = &factor
+                break
+            }
+        }
+    }
 
 	if tokenFactor.Id == "" {
 		return nil, wrongMfaError
 	}
 
-	return &tokenFactor, nil
+	return tokenFactor, nil
 }
 
 // do that mfa stuff
@@ -176,7 +189,7 @@ func extractTokenFactor(ores *OktaLoginResponse) (*OktaMfaFactor, error) {
 func doMfa(ores *OktaLoginResponse, tf *OktaMfaFactor, mfaToken string) (string, error) {
 	var url string
 	var st string
-	if ores == nil || tf == nil || mfaToken == "" {
+	if ores == nil || tf == nil {
 		return st, errors.New("invalid params!")
 	}
 

@@ -211,6 +211,49 @@ func getSessionFromLogin(oktaCfg *OktaConfig) (string, error) {
 		return "", err
 	}
 
+	sessionToken, err := challengeMfa(ores, factor)
+	return sessionToken, err
+}
+
+func challengeMfa(ores *OktaLoginResponse, factor *OktaMfaFactor) (string, error) {
+	if factor.FactorType == "push" {
+		sessionToken, err := challengePushMfa(ores, factor)
+		return sessionToken, err
+	} else if factor.FactorType == "token:software:totp" {
+		sessionToken, err := challengeTotpMfa(ores, factor)
+		return sessionToken, err
+	}
+
+	fmt.Println("Unknown MFA type:", factor.FactorType)
+	return "", errors.New("unknown MFA type")
+}
+
+func challengePushMfa(ores *OktaLoginResponse, factor *OktaMfaFactor) (string, error) {
+	debug := debug.Debug("oktad:challengePushMfa")
+	tries := 0
+	var sessionToken string
+	var err error
+
+TRYMFA:
+	time.Sleep(250 * time.Millisecond)
+
+	if tries < 240 {
+		sessionToken, err = doMfa(ores, factor, "")
+		if err != nil {
+			tries++
+			goto TRYMFA // eat that, Djikstra!
+		}
+	} else {
+		fmt.Println("No response to push notification!")
+		debug("error from doMfa was %s", err)
+		return "", err
+	}
+
+	return sessionToken, nil
+}
+
+func challengeTotpMfa(ores *OktaLoginResponse, factor *OktaMfaFactor) (string, error) {
+	debug := debug.Debug("oktad:challengeTotpMfa")
 	tries := 0
 	var sessionToken string
 
