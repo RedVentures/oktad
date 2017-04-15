@@ -12,8 +12,9 @@ var awsProfileNotFound = errors.New("AWS profile not found!")
 var debugCfg = debug.Debug("oktad:config")
 
 type OktaConfig struct {
-	BaseURL string
-	AppURL  string
+	BaseURL     string
+	AppURL      string
+	TokenFactor string
 }
 
 // this is what we care about
@@ -55,6 +56,14 @@ func parseConfig(fname string) (OktaConfig, error) {
 
 	cfg.BaseURL = bu.String()
 	cfg.AppURL = au.String()
+
+	if osec.HasKey("tokenFactor") {
+		tokenFactor, err := osec.GetKey("tokenFactor")
+		if err != nil {
+			return cfg, err
+		}
+		cfg.TokenFactor = tokenFactor.String()
+	}
 
 	return cfg, nil
 }
