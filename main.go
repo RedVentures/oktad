@@ -224,7 +224,8 @@ func challengeMfa(ores *OktaLoginResponse, factor *OktaMfaFactor) (string, error
 		return sessionToken, err
 	}
 
-	fmt.Println("Unknown MFA type:", factor.FactorType)
+	fmt.Println("Unsupported MFA type:", factor.FactorType)
+	fmt.Println("Supported types: TOTP and Okta Verify Push")
 	return "", errors.New("unknown MFA type")
 }
 
