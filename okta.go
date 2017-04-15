@@ -11,8 +11,8 @@ import "encoding/base64"
 import "github.com/tj/go-debug"
 import "github.com/PuerkitoBio/goquery"
 import (
-	"net/http"
 	"github.com/havoc-io/go-keytar"
+	"net/http"
 )
 
 var noMfaError = errors.New("MFA required to use this tool")
@@ -20,6 +20,8 @@ var wrongMfaError = errors.New("No valid mfa congfigured for your account!")
 var loginFailedError = errors.New("login failed")
 
 var debugOkta = debug.Debug("oktad:okta")
+
+var defaultTokenFactor = "token:software:totp"
 
 type OktaLoginRequest struct {
 	Username string `json:"username"`
@@ -145,42 +147,40 @@ func makeRequestBody(t interface{}) io.Reader {
 }
 
 // pulls the factor we should use out of the response
-func extractTokenFactor(ores *OktaLoginResponse) (*OktaMfaFactor, error) {
+func extractTokenFactor(oktaCfg *OktaConfig, ores *OktaLoginResponse) (*OktaMfaFactor, error) {
 	factors := ores.Embedded.Factors
 	if len(factors) == 0 {
 		return nil, errors.New("MFA factors not present in response")
 	}
 
+	if oktaCfg.TokenFactor != "" && oktaCfg.TokenFactor != defaultTokenFactor {
+		tokenFactor, err := findTokenFactor(factors, oktaCfg.TokenFactor)
+
+		if err == nil {
+			return tokenFactor, err
+		}
+		debugOkta("could not find preferred token factor", oktaCfg.TokenFactor)
+	}
+
+	tokenFactor, err := findTokenFactor(factors, defaultTokenFactor)
+	return tokenFactor, err
+}
+
+func findTokenFactor(factors []OktaMfaFactor, factorType string) (*OktaMfaFactor, error) {
 	var tokenFactor *OktaMfaFactor
 	for _, factor := range factors {
-		// need to assert that this is a map
-		// since I don't know the structure enough
-		// to make a struct for it
-		if factor.FactorType == "push" {
-			debugOkta("push found!")
+		if factor.FactorType == factorType {
+			debugOkta("token factor type found!", factorType)
 			tokenFactor = &factor
 			break
 		}
 	}
 
-    if tokenFactor == nil {
-        for _, factor := range factors {
-            // need to assert that this is a map
-            // since I don't know the structure enough
-            // to make a struct for it
-            if factor.FactorType == "token:software:totp" {
-                debugOkta("software totp token found!")
-                tokenFactor = &factor
-                break
-            }
-        }
-    }
-
-	if tokenFactor.Id == "" {
-		return nil, wrongMfaError
+	if tokenFactor != nil && tokenFactor.Id != "" {
+		return tokenFactor, nil
 	}
 
-	return tokenFactor, nil
+	return nil, wrongMfaError
 }
 
 // do that mfa stuff

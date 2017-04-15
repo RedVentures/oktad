@@ -203,7 +203,7 @@ func getSessionFromLogin(oktaCfg *OktaConfig) (string, error) {
 		return "", errors.New("MFA required to use this tool")
 	}
 
-	factor, err := extractTokenFactor(ores)
+	factor, err := extractTokenFactor(oktaCfg, ores)
 
 	if err != nil {
 		fmt.Println("Error processing okta response!")
