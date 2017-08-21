@@ -20,8 +20,9 @@ type OktaConfig struct {
 // in your aws config
 type AwsConfig struct {
 	// destination ARN
-	DestArn string
-	Region  string
+	DestArn      string
+	CrossAcctArn string
+	Region       string
 }
 
 // loads configuration data from the file specified
@@ -149,6 +150,32 @@ func readAwsProfile(name string) (AwsConfig, error) {
 
 	arnKey, _ := s.GetKey("role_arn")
 	cfg.DestArn = arnKey.String()
+
+	cfg.CrossAcctArn = ""
+	if s.HasKey("source_profile") {
+		debugCfg("aws profile %s has a source_profile, looking for cross-account arn", name)
+		spKey, _ := s.GetKey("source_profile")
+
+		// profile's key is [profile <key>] unless it is the default profile
+		crossAcctProfile := spKey.String()
+		if spKey.String() != "default" {
+			crossAcctProfile = fmt.Sprintf("profile %s", spKey.String())
+		}
+
+		debugCfg("source_profile is %s", crossAcctProfile)
+		caas, err := asec.GetSection(crossAcctProfile)
+
+		if err != nil {
+			debugCfg("aws cross-account profile load err, %s", err)
+			return cfg, err
+		}
+
+		if caas.HasKey("role_arn") {
+			arnKey, _ := caas.GetKey("role_arn")
+			debugCfg("CrossAcctArn: %s", arnKey.String())
+			cfg.CrossAcctArn = arnKey.String()
+		}
+	}
 
 	// try to figure out a region...
 	// try to look for a region key in current section

@@ -32,13 +32,19 @@ func assumeFirstRole(acfg AwsConfig, saml *OktaSamlResponse) (*credentials.Crede
 
 	var arns *SamlProviderArns
 	var found bool = false
+	var err error
 
 	for _, a := range saml.Attributes {
 		if a.Name == "https://aws.amazon.com/SAML/Attributes/Role" {
-			crossAccountArn, err := selectCrossAccount(a.Value)
+			var crossAccountArn string
+			if acfg.CrossAcctArn != "" {
+				crossAccountArn = acfg.CrossAcctArn
+			} else {
+				crossAccountArn, err = selectCrossAccount(a.Value)
 
-			if err != nil {
-				return nil, emptyExpire, err
+				if err != nil {
+					return nil, emptyExpire, err
+				}
 			}
 
 			for _, v := range a.Value {
