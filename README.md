@@ -60,5 +60,6 @@ $ DEBUG=oktad* oktad production -- aws ec2 describe-instances
 
 - Dimitrios Arethas [darethas@redventures.com]
 - Thomas Hopkins [thopkins@redventures.com]
-- Lee Standen [@lstanden]
 - Todd Lunter [@tlunter]
+- Gildas Le Nadan [@endemics]
+- Lee Standen [@lstanden]
