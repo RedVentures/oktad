@@ -1,3 +1,9 @@
+# This application is deprecated as of whenever this gets committed!
+
+It'll still continue to work, but I'm not planning on maintaining it! 
+
+Please consider using [segmentio/aws-okta](https://github.com/segmentio/aws-okta) instead! It does everything `oktad` ever officially did and more, like allowing you to adjust your `AssumeRole` session length per call!
+
 # oktad
 
 [okta-aws](https://github.com/RedVentures/okta-aws), but in go. This program authenticates with Okta and then assumes role twice in Amazon.
