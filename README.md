@@ -26,6 +26,8 @@ First, create an `~/.okta-aws/config` file with your Ookta base URL and app URL,
 [okta]
 baseUrl=https://mycompany.okta.com/
 appUrl=https://mycompany.okta.com/app/YOUR_APP/OKTA_MAGIC/sso/saml
+
+tokenFactor=push (optional, uses Okta Verify)
 ```
 
 Third, set up an AWS CLI config file. You need to create `~/.aws/config` and fill it with a profile containing the ARN for a role you ultimately want to get temporary credentials for. This file might look like the following:
