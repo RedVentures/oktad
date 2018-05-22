@@ -55,9 +55,9 @@ type OktaSamlResponse struct {
 	raw        string
 	XMLname    xml.Name `xml:"Response"`
 	Attributes []struct {
-		Name       string `xml:",attr"`
-		NameFormat string `xml:",attr"`
-		Value      string `xml:"AttributeValue"`
+		Name       string   `xml:",attr"`
+		NameFormat string   `xml:",attr"`
+		Value      []string `xml:"AttributeValue"`
 	} `xml:"Assertion>AttributeStatement>Attribute"`
 }
 
